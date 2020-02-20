@@ -3,46 +3,92 @@
     <label for="selector">
       Filter:
       <select v-model="select" id="selector">
-        <option value="all" selected>All</option>
-        <option value="test" selected>test</option>
+        <option value="All">All</option>
+        <option value="Purchased">Purchased</option>
+        <option value="Unpurchased">Unpurchased</option>
+        <option value="One time purchases">One time purchases</option>
+        <option value="Subscriptions">Subscriptions</option>
       </select>
     </label>
-    <h1>SELECTED FILTER: {{ selectedFilter }}</h1>
-    <div v-for="(product, idx) in products" :key="idx">
-      {{ product ? product.title : "" }}
+    <h1 class="py-2">SELECTED FILTER: {{ selectedFilter }}</h1>
+    <div class="grid-container" v-if="products.length">
+      <Product
+        v-for="(product, idx) in sortedProducts(products)"
+        :key="idx"
+        :product="product"
+      />
     </div>
   </div>
 </template>
 
+<style>
+@import "../scss/ProductList.scss";
+</style>
+
 <script>
 const productItems = require("@/assets/products.json");
+import Product from "../components/Product.vue";
 
 export default {
+  components: {
+    Product
+  },
   name: "ProductList",
   computed: {
     products() {
-      if (this.selectedFilter == "all") {
-        let products = [...new Array(productItems.length)];
-        for (let i = 1; i < productItems.length - 1; i -= -1) {
-          products.forEach((product, idx) => {
-            if (idx == i) {
-              products.push(productItems[idx]);
-            }
-          });
-        }
+      let products = [];
+      if (this.selectedFilter == "All") {
+        productItems.forEach((product, idx) => {
+          products.push(productItems[idx]);
+        });
+
+        return products;
+      } else if (this.selectedFilter == "Purchased") {
+        productItems.forEach((product, idx) => {
+          if (product.purchased) {
+            products.push(productItems[idx]);
+          }
+        });
+        return products;
+      } else if (this.selectedFilter == "Unpurchased") {
+        productItems.forEach((product, idx) => {
+          if (!product.purchased) {
+            products.push(productItems[idx]);
+          }
+        });
+        return products;
+      } else if (this.selectedFilter == "One time purchases") {
+        productItems.forEach((product, idx) => {
+          if (product.type == "onetime") {
+            products.push(productItems[idx]);
+          }
+        });
+        return products;
+      } else if (this.selectedFilter == "Subscriptions") {
+        productItems.forEach((product, idx) => {
+          if (product.cycle) {
+            products.push(productItems[idx]);
+          }
+        });
         return products;
       }
+
       return "Product";
+    }
+  },
+  methods: {
+    sortedProducts: function(products) {
+      return products.sort((a, b) => (a.order > b.order ? 1 : -1));
     }
   },
   data() {
     return {
-      select: "all",
-      selectedFilter: "all"
+      select: "All",
+      selectedFilter: "All"
     };
   },
   watch: {
-    select: function(oldVal, newVal) {
+    select: function(newVal) {
       this.selectedFilter = newVal;
     }
   }
